@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Step Flow Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --canvas-bg: #ffffff;
+            --primary-color: #0d6efd;
+            --border-color: #dee2e6;
+        }
+        body { background-color: var(--bg-color); height: 100vh; overflow: hidden; }
+        #app { height: 100%; display: flex; flex-direction: column; }
+
+        /* Header */
+        .editor-header {
+            height: 60px;
+            background: #fff;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        /* Layout */
+        .editor-body { flex: 1; display: flex; overflow: hidden; }
+
+        /* Sidebar (Toolbox) */
+        .toolbox {
+            width: 280px;
+            background: #fff;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .toolbox-header { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+        .block-library-item {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+        .block-library-item:hover { background: #f8f9fa; }
+
+        /* Canvas */
+        .canvas {
+            flex: 1;
+            overflow: auto;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            width: 320px;
+            background: #fff;
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* Block Cards */
+        .flow-block-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .block-card {
+            width: 300px;
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            position: relative;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .block-card:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .block-card.active { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15); }
+
+        .block-icon {
+            width: 32px;
+            height: 32px;
+            background: #e7f0ff;
+            color: var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+        }
+
+        /* Branching */
+        .branches-container {
+            display: flex;
+            margin-top: 1rem;
+            gap: 2rem;
+            position: relative;
+        }
+        .branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 300px;
+            position: relative;
+        }
+        .branch-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        /* Connectors */
+        .connector-v { width: 2px; height: 2rem; background: #adb5bd; }
+
+        /* Actions */
+        .block-actions {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            display: none;
+            gap: 4px;
+        }
+        .block-card:hover .block-actions { display: flex; }
+
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <div class="editor-header">
+            <h5 class="mb-0"><i class="bi bi-diagram-3-fill me-2 text-primary"></i>Automation Flow Editor</h5>
+            <div>
+                <button @click="saveFlow" class="btn btn-primary btn-sm" :disabled="saving">
+                    <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+                    Save & Publish
+                </button>
+            </div>
+        </div>
+
+        <div class="editor-body">
+            <!-- Sidebar: Toolbox -->
+            <div class="toolbox">
+                <div class="toolbox-header">
+                    <h6 class="mb-0 text-muted">TOOLBOX</h6>
+                    <small class="text-muted">Drag or click nodes to add</small>
+                </div>
+                <div v-for="def in definitions" :key="def.type" @click="addBlock(def)" class="block-library-item">
+                    <div class="d-flex align-items-center">
+                        <div class="block-icon">
+                            <i :class="def.icon"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold small">{{ def.title }}</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">{{ def.description }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Canvas -->
+            <div class="canvas" @click="selectedBlockPath = null">
+                <div class="flow-block-container">
+                    <template v-for="(block, index) in flow" :key="block.id">
+                        <flow-node
+                            :block="block"
+                            :path="[index]"
+                            :selected-path="selectedBlockPath"
+                            :definitions="definitions"
+                            @select="selectBlock"
+                            @remove="removeBlock"
+                            @add-to-branch="addBlockToBranch"
+                        ></flow-node>
+                        <div v-if="index < flow.length - 1" class="connector-v"></div>
+                    </template>
+
+                    <div v-if="flow.length === 0" class="text-center mt-5 text-muted">
+                        <i class="bi bi-plus-circle display-4"></i>
+                        <p>Click a block in the toolbox to start</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="settings-panel">
+                <div v-if="selectedBlock">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="mb-0">NODE SETTINGS</h6>
+                        <button @click="selectedBlockPath = null" class="btn-close btn-sm"></button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Title</label>
+                        <input v-model="selectedBlock.title" class="form-control form-control-sm">
+                    </div>
+
+                    <hr>
+                    <h6 class="small fw-bold mb-3">DATA ATTRIBUTES</h6>
+                    <div v-for="(val, key) in selectedBlock.data" :key="key" class="mb-3">
+                        <label class="form-label small text-capitalize">{{ key }}</label>
+                        <input v-model="selectedBlock.data[key]" class="form-control form-control-sm">
+                    </div>
+
+                    <div v-if="Object.keys(selectedBlock.data).length === 0" class="text-muted small italic">
+                        No configurable attributes.
+                    </div>
+                </div>
+                <div v-else class="text-center text-muted mt-5">
+                    <p class="small">Select a node to edit its properties</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        const FlowNode = {
+            name: 'flow-node',
+            props: ['block', 'path', 'selectedPath', 'definitions'],
+            template: `
+                <div class="flow-block-container">
+                    <div class="block-card"
+                         :class="{ active: isSelected }"
+                         @click.stop="$emit('select', path)">
+
+                        <div class="block-actions">
+                            <button @click.stop="$emit('remove', path)" class="btn btn-danger btn-xs py-0 px-1" style="font-size: 0.6rem;">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+
+                        <div class="d-flex align-items-center">
+                            <div class="block-icon">
+                                <i :class="getIcon(block.type)"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="fw-bold small text-truncate">{{ block.title }}</div>
+                                <div class="text-muted" style="font-size: 0.65rem;">{{ block.type }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Branches -->
+                    <div v-if="hasBranches" class="branches-container">
+                        <div v-for="branchName in branchNames" :key="branchName" class="branch">
+                            <div class="connector-v"></div>
+                            <div class="branch-label">{{ branchName }}</div>
+                            <div class="connector-v"></div>
+
+                            <template v-for="(b, idx) in (block.branches[branchName] || [])" :key="b.id">
+                                <flow-node
+                                    :block="b"
+                                    :path="[...path, 'branches', branchName, idx]"
+                                    :selected-path="selectedPath"
+                                    :definitions="definitions"
+                                    @select="(p) => $emit('select', p)"
+                                    @remove="(p) => $emit('remove', p)"
+                                    @add-to-branch="(p, def) => $emit('add-to-branch', p, def)"
+                                ></flow-node>
+                                <div v-if="idx < block.branches[branchName].length - 1" class="connector-v"></div>
+                            </template>
+
+                            <button @click.stop="addBlockToThisBranch(branchName)" class="btn btn-outline-primary btn-xs mt-2" style="font-size: 0.6rem; padding: 2px 5px;">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `,
+            computed: {
+                isSelected() {
+                    return JSON.stringify(this.path) === JSON.stringify(this.selectedPath);
+                },
+                hasBranches() {
+                    const def = this.definitions.find(d => d.type === this.block.type);
+                    return def && def.branchNames && def.branchNames.length > 0;
+                },
+                branchNames() {
+                    const def = this.definitions.find(d => d.type === this.block.type);
+                    return def ? def.branchNames : [];
+                }
+            },
+            methods: {
+                getIcon(type) {
+                    const def = this.definitions.find(d => d.type === type);
+                    return def ? def.icon : 'bi-box';
+                },
+                addBlockToThisBranch(branchName) {
+                    // This is tricky because we need a definition.
+                    // Let's emit an event and handle it in main app by showing a picker or just adding a default
+                    this.$emit('add-to-branch', [...this.path, 'branches', branchName], null);
+                }
+            }
+        };
+
+        createApp({
+            components: { FlowNode },
+            setup() {
+                const flow = ref([]);
+                const definitions = ref([]);
+                const selectedBlockPath = ref(null);
+                const saving = ref(false);
+
+                const selectedBlock = computed(() => {
+                    if (!selectedBlockPath.value) return null;
+                    let curr = flow.value;
+                    for (const p of selectedBlockPath.value) {
+                        curr = curr[p];
+                    }
+                    return curr;
+                });
+
+                const addBlock = (def) => {
+                    const newBlock = {
+                        id: 'b_' + Math.random().toString(36).substr(2, 9),
+                        type: def.type,
+                        title: def.title,
+                        data: JSON.parse(JSON.stringify(def.defaultData || {})),
+                        branches: {}
+                    };
+                    if (def.branchNames) {
+                        def.branchNames.forEach(bn => newBlock.branches[bn] = []);
+                    }
+                    flow.value.push(newBlock);
+                };
+
+                const addBlockToBranch = (branchPath, def) => {
+                    // For simplicity, if no def, use the first one from definitions
+                    if (!def) def = definitions.value[0];
+
+                    const newBlock = {
+                        id: 'b_' + Math.random().toString(36).substr(2, 9),
+                        type: def.type,
+                        title: def.title,
+                        data: JSON.parse(JSON.stringify(def.defaultData || {})),
+                        branches: {}
+                    };
+                    if (def.branchNames) {
+                        def.branchNames.forEach(bn => newBlock.branches[bn] = []);
+                    }
+
+                    let curr = flow.value;
+                    for (const p of branchPath) {
+                        curr = curr[p];
+                    }
+                    curr.push(newBlock);
+                };
+
+                const selectBlock = (path) => {
+                    selectedBlockPath.value = path;
+                };
+
+                const removeBlock = (path) => {
+                    const idx = path[path.length - 1];
+                    const parentPath = path.slice(0, -1);
+                    let curr = flow.value;
+                    for (const p of parentPath) {
+                        curr = curr[p];
+                    }
+                    curr.splice(idx, 1);
+                    selectedBlockPath.value = null;
+                };
+
+                const saveFlow = async () => {
+                    saving.value = true;
+                    try {
+                        const baseUrl = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
+                        await fetch(baseUrl + 'save', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(flow.value)
+                        });
+                        alert("Flow published successfully!");
+                    } catch (e) {
+                        console.error(e);
+                        alert("Save failed");
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+
+                const loadConfig = async () => {
+                    const baseUrl = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
+                    const res = await fetch(baseUrl + 'config');
+                    const data = await res.json();
+                    definitions.value = data.definitions;
+                    flow.value = data.flow || [];
+                };
+
+                onMounted(loadConfig);
+
+                return {
+                    flow,
+                    definitions,
+                    selectedBlockPath,
+                    selectedBlock,
+                    saving,
+                    addBlock,
+                    addBlockToBranch,
+                    selectBlock,
+                    removeBlock,
+                    saveFlow
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
