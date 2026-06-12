@@ -1,4 +1,3 @@
-(function() {
     const { createApp, ref, computed, onMounted } = Vue;
     const mountId = 'app-[[.ID]]';
     const endpoint = '[[.Endpoint]]';
@@ -30,30 +29,34 @@
                 </div>
 
                 <!-- Branches -->
-                <div v-if="hasBranches" class="branches-container">
-                    <div v-for="branchName in branchNames" :key="branchName" class="branch">
-                        <div class="connector-v"></div>
-                        <div class="branch-label">{{ branchName }}</div>
-                        <div class="connector-v"></div>
+                        <template v-if="hasBranches">
+                            <div class="branches-container">
+                                <template v-for="branchName in branchNames" :key="branchName">
+                                    <div class="branch">
+                                        <div class="connector-v"></div>
+                                        <div class="branch-label">{{ branchName }}</div>
+                                        <div class="connector-v"></div>
 
-                        <template v-for="(b, idx) in (block.branches[branchName] || [])" :key="b.id">
-                            <flow-node
-                                :block="b"
-                                :path="[...path, 'branches', branchName, idx]"
-                                :selected-path="selectedPath"
-                                :definitions="definitions"
-                                @select="(p) => $emit('select', p)"
-                                @remove="(p) => $emit('remove', p)"
-                                @add-to-branch="(p, def) => $emit('add-to-branch', p, def)"
-                            ></flow-node>
-                            <div v-if="idx < block.branches[branchName].length - 1" class="connector-v"></div>
-                        </template>
+                                        <template v-for="(b, idx) in (block.branches[branchName] || [])" :key="b.id">
+                                            <flow-node
+                                                :block="b"
+                                                :path="[...path, 'branches', branchName, idx]"
+                                                :selected-path="selectedPath"
+                                                :definitions="definitions"
+                                                @select="(p) => $emit('select', p)"
+                                                @remove="(p) => $emit('remove', p)"
+                                                @add-to-branch="(p, def) => $emit('add-to-branch', p, def)"
+                                            ></flow-node>
+                                            <div v-if="idx < block.branches[branchName].length - 1" class="connector-v"></div>
+                                        </template>
 
-                        <button @click.stop="addBlockToThisBranch(branchName)" class="btn btn-outline-primary btn-xs mt-2" style="font-size: 0.6rem; padding: 2px 5px;">
-                            <i class="bi bi-plus"></i>
-                        </button>
+                                        <button @click.stop="addBlockToThisBranch(branchName)" class="btn btn-outline-primary btn-xs mt-2" style="font-size: 0.6rem; padding: 2px 5px;">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                </template>
                     </div>
-                </div>
+                        </template>
             </div>
         `,
         computed: {
@@ -166,12 +169,12 @@
             };
 
             const loadConfig = async () => {
-                // Pre-load from template if available
-                const initialFlow = [[.FlowJSON]];
-                const initialDefs = [[.Definitions]];
-
-                if (initialFlow) flow.value = initialFlow;
-                if (initialDefs) definitions.value = initialDefs;
+                // Pre-load from global if available (injected via HTML template)
+                const globalData = window["editorData_[[.ID]]"];
+                if (globalData) {
+                    if (globalData.flow) flow.value = globalData.flow;
+                    if (globalData.definitions) definitions.value = globalData.definitions;
+                }
 
                 // Then refresh from API to ensure we have latest (optional)
                 try {
@@ -201,4 +204,3 @@
             };
         }
     }).mount('#' + mountId);
-})();

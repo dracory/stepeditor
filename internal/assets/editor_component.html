@@ -23,17 +23,19 @@
                     <h6 class="mb-0 text-muted">TOOLBOX</h6>
                     <small class="text-muted">Drag or click nodes to add</small>
                 </div>
-                <div v-for="def in definitions" :key="def.type" @click="addBlock(def)" class="block-library-item">
-                    <div class="d-flex align-items-center">
-                        <div class="block-icon">
-                            <i :class="def.icon"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold small">{{ def.title }}</div>
-                            <div class="text-muted" style="font-size: 0.7rem;">{{ def.description }}</div>
+                <template v-for="def in definitions" :key="def.type">
+                    <div @click="addBlock(def)" class="block-library-item">
+                        <div class="d-flex align-items-center">
+                            <div class="block-icon">
+                                <i :class="def.icon"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold small">{{ def.title }}</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">{{ def.description }}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </template>
             </div>
 
             <!-- Main Canvas -->
@@ -61,7 +63,7 @@
 
             <!-- Settings Panel -->
             <div class="settings-panel">
-                <div v-if="selectedBlock">
+                <template v-if="selectedBlock">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h6 class="mb-0">NODE SETTINGS</h6>
                         <button @click="selectedBlockPath = null" class="btn-close btn-sm"></button>
@@ -74,15 +76,17 @@
 
                     <hr>
                     <h6 class="small fw-bold mb-3">DATA ATTRIBUTES</h6>
-                    <div v-for="(val, key) in selectedBlock.data" :key="key" class="mb-3">
-                        <label class="form-label small text-capitalize">{{ key }}</label>
-                        <input v-model="selectedBlock.data[key]" class="form-control form-control-sm">
-                    </div>
+                    <template v-for="(val, key) in selectedBlock.data" :key="key">
+                        <div class="mb-3">
+                            <label class="form-label small text-capitalize">{{ key }}</label>
+                            <input v-model="selectedBlock.data[key]" class="form-control form-control-sm">
+                        </div>
+                    </template>
 
                     <div v-if="Object.keys(selectedBlock.data).length === 0" class="text-muted small italic">
                         No configurable attributes.
                     </div>
-                </div>
+                </template>
                 <div v-else class="text-center text-muted mt-5">
                     <p class="small">Select a node to edit its properties</p>
                 </div>
@@ -92,6 +96,12 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        [[.JS]]
+        (function() {
+            window["editorData_[[.ID]]"] = {
+                flow: JSON.parse('[[.FlowJSON]]'),
+                definitions: JSON.parse('[[.Definitions]]')
+            };
+            [[.JS]]
+        })();
     </script>
 </div>

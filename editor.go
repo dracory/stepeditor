@@ -10,12 +10,13 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	texttemplate "text/template"
 )
 
 //go:embed internal/assets/*
 var assets embed.FS
 
-var templates = template.Must(template.New("").Delims("[[", "]]").ParseFS(assets, "internal/assets/*.html"))
+var templates = texttemplate.Must(texttemplate.New("").Delims("[[", "]]").ParseFS(assets, "internal/assets/*.html"))
 
 // Block represents a single step in the flow.
 type Block struct {
@@ -99,6 +100,17 @@ func (e *Editor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (e *Editor) serveIndex(w http.ResponseWriter, r *http.Request) {
 	data := e.getTemplateData()
 
+	// Use text/template for JS and CSS to avoid auto-escaping
+	tJS := texttemplate.Must(texttemplate.New("js").Delims("[[", "]]").Parse(string(data.JS)))
+	var jsBuf bytes.Buffer
+	tJS.Execute(&jsBuf, data)
+	data.JS = template.HTML(jsBuf.String())
+
+	tCSS := texttemplate.Must(texttemplate.New("css").Delims("[[", "]]").Parse(string(data.CSS)))
+	var cssBuf bytes.Buffer
+	tCSS.Execute(&cssBuf, data)
+	data.CSS = template.HTML(cssBuf.String())
+
 	w.Header().Set("Content-Type", "text/html")
 	if err := templates.ExecuteTemplate(w, "index.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -108,6 +120,17 @@ func (e *Editor) serveIndex(w http.ResponseWriter, r *http.Request) {
 // ToHTML returns the HTML for the editor component.
 func (e *Editor) ToHTML() string {
 	data := e.getTemplateData()
+
+	// Use text/template for JS and CSS to avoid auto-escaping
+	tJS := texttemplate.Must(texttemplate.New("js").Delims("[[", "]]").Parse(string(data.JS)))
+	var jsBuf bytes.Buffer
+	tJS.Execute(&jsBuf, data)
+	data.JS = template.HTML(jsBuf.String())
+
+	tCSS := texttemplate.Must(texttemplate.New("css").Delims("[[", "]]").Parse(string(data.CSS)))
+	var cssBuf bytes.Buffer
+	tCSS.Execute(&cssBuf, data)
+	data.CSS = template.HTML(cssBuf.String())
 
 	var buf bytes.Buffer
 	if err := templates.ExecuteTemplate(&buf, "editor_component.html", data); err != nil {
@@ -141,11 +164,15 @@ func (e *Editor) getTemplateData() templateData {
 	css, _ := assets.ReadFile("internal/assets/editor_component.css")
 	js, _ := assets.ReadFile("internal/assets/editor_component.js")
 
+	// Escape single quotes in JSON for embedding in JS
+	flowJSONStr := strings.ReplaceAll(string(flowJSON), "'", "\\'")
+	defsJSONStr := strings.ReplaceAll(string(defsJSON), "'", "\\'")
+
 	return templateData{
 		ID:          e.id,
 		Endpoint:    e.config.Endpoint,
-		FlowJSON:    string(flowJSON),
-		Definitions: string(defsJSON),
+		FlowJSON:    flowJSONStr,
+		Definitions: defsJSONStr,
 		CSS:         template.HTML(css),
 		JS:          template.HTML(js),
 	}
