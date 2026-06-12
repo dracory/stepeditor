@@ -13,10 +13,11 @@ var assets embed.FS
 
 // Block represents a single step in the flow.
 type Block struct {
-	ID    string            `json:"id"`
-	Type  string            `json:"type"`
-	Title string            `json:"title"`
-	Data  map[string]string `json:"data"`
+	ID       string            `json:"id"`
+	Type     string            `json:"type"`
+	Title    string            `json:"title"`
+	Data     map[string]string `json:"data"`
+	Branches map[string][]Block `json:"branches,omitempty"`
 }
 
 // BlockDefinition provides information about a block type.
@@ -26,6 +27,7 @@ type BlockDefinition struct {
 	Description string            `json:"description"`
 	Icon        string            `json:"icon"` // Bootstrap icon class
 	DefaultData map[string]string `json:"defaultData"`
+	BranchNames []string          `json:"branchNames,omitempty"`
 }
 
 // CustomBlock is an interface that users can implement to provide their own blocks.
@@ -122,10 +124,7 @@ func (e *Editor) GetFlow() []Block {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	// Return a copy to be safe
-	cp := make([]Block, len(e.flow))
-	copy(cp, e.flow)
-	return cp
+	return e.flow
 }
 
 // SetFlow sets the current flow.

@@ -46,12 +46,15 @@ type ConditionBlock struct{}
 func (b ConditionBlock) Definition() stepfloweditor.BlockDefinition {
 	return stepfloweditor.BlockDefinition{
 		Type:        "condition",
-		Title:       "Condition",
-		Description: "Check a condition before proceeding.",
-		Icon:        "bi-question-diamond-fill",
+		Title:       "Branch Check",
+		Description: "Check a condition and branch the flow.",
+		Icon:        "bi-shuffle",
 		DefaultData: map[string]string{
-			"expression": "",
+			"variable": "status",
+			"operator": "==",
+			"value":    "approved",
 		},
+		BranchNames: []string{"True", "False"},
 	}
 }
 
@@ -66,24 +69,40 @@ func main() {
 		},
 	})
 
-	// Add some initial blocks to the flow
+	// Add an initial branched flow
 	editor.SetFlow([]stepfloweditor.Block{
 		{
-			ID:    "init_1",
-			Type:  "email",
-			Title: "Welcome Email",
-			Data: map[string]string{
-				"to":      "user@example.com",
-				"subject": "Welcome!",
-				"body":    "Hello and welcome to our service.",
-			},
+			ID:    "b1",
+			Type:  "delay",
+			Title: "Daily Process",
+			Data:  map[string]string{"duration": "24h"},
 		},
 		{
-			ID:    "init_2",
-			Type:  "delay",
-			Title: "Wait for 1 day",
+			ID:    "b2",
+			Type:  "condition",
+			Title: "Branch Check",
 			Data: map[string]string{
-				"duration": "24h",
+				"variable": "status",
+				"operator": "==",
+				"value":    "approved",
+			},
+			Branches: map[string][]stepfloweditor.Block{
+				"True": {
+					{
+						ID:    "b3",
+						Type:  "email",
+						Title: "Send Approval Email",
+						Data:  map[string]string{"subject": "Approved!"},
+					},
+				},
+				"False": {
+					{
+						ID:    "b4",
+						Type:  "email",
+						Title: "Send Rejection Email",
+						Data:  map[string]string{"subject": "Rejected"},
+					},
+				},
 			},
 		},
 	})

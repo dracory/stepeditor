@@ -1,16 +1,17 @@
 # Step Flow Editor
 
-A step-by-step workflow editor for Golang projects, similar to Power Automate. This library provides an embeddable UI that allows users to build and configure sequential flows using custom-defined blocks.
+A powerful, extensible, step-by-step workflow editor for Golang projects, similar to Power Automate. This library provides an embeddable UI that allows users to build and configure complex flows with support for branching and conditional logic.
 
 ![Step Flow Editor Screenshot](assets/screenshot.png)
 
 ## Features
 
+- **Branching Support**: Create complex workflows with conditional paths (e.g., True/False branches).
 - **Embeddable**: Easily mount the editor on any HTTP endpoint in your Go application.
-- **Extensible**: Define your own block types by implementing a simple Go interface.
-- **Reactive UI**: Built with Vue.js 3 and Bootstrap for a modern, responsive experience.
-- **JSON Serialization**: Load and save flows as JSON arrays.
-- **Interactive**: Add, remove, reorder, and configure blocks with ease.
+- **Extensible**: Define your own block types and branch names by implementing a simple Go interface.
+- **Reactive UI**: Built with Vue.js 3 and Bootstrap for a modern, responsive "canvas-style" experience.
+- **JSON Serialization**: Load and save flows as deeply nested JSON structures.
+- **Interactive**: Drag-and-drop feel with recursive rendering and specialized node settings.
 
 ## Installation
 
@@ -28,18 +29,21 @@ import (
 	"github.com/username/stepfloweditor"
 )
 
-// Define a custom block
-type MyBlock struct{}
+// Define a custom block with branching
+type ConditionBlock struct{}
 
-func (b MyBlock) Definition() stepfloweditor.BlockDefinition {
+func (b ConditionBlock) Definition() stepfloweditor.BlockDefinition {
 	return stepfloweditor.BlockDefinition{
-		Type:        "my-block",
-		Title:       "My Custom Block",
-		Description: "Does something awesome.",
-		Icon:        "bi-star-fill",
+		Type:        "condition",
+		Title:       "Branch Check",
+		Description: "Check a condition and branch the flow.",
+		Icon:        "bi-shuffle",
 		DefaultData: map[string]string{
-			"setting": "default value",
+			"variable": "status",
+			"operator": "==",
+			"value":    "approved",
 		},
+		BranchNames: []string{"True", "False"},
 	}
 }
 
@@ -47,7 +51,8 @@ func main() {
 	editor := stepfloweditor.New(stepfloweditor.NewConfig{
 		Endpoint: "/editor",
 		Blocks: []stepfloweditor.CustomBlock{
-			MyBlock{},
+			ConditionBlock{},
+			// ... other blocks
 		},
 	})
 
@@ -66,11 +71,11 @@ Creates a new editor instance.
 
 ### `Editor.ServeHTTP(w, r)`
 
-Handles HTTP requests. Mount this on your router. Ensure the path ends with a trailing slash or is handled correctly by your router.
+Handles HTTP requests. Mount this on your router.
 
 ### `Editor.GetFlow() []Block`
 
-Returns the current flow as a slice of `Block` structs.
+Returns the current flow as a slice of `Block` structs, including nested branches.
 
 ### `Editor.SetFlow(flow []Block)`
 
@@ -88,7 +93,8 @@ type CustomBlock interface {
 
 The `BlockDefinition` includes:
 - `Type`: Unique identifier for the block type.
-- `Title`: Display name in the library and editor.
-- `Description`: Short description of what the block does.
-- `Icon`: Bootstrap Icon class (e.g., `bi-envelope-fill`).
-- `DefaultData`: Map of default attributes for the block.
+- `Title`: Display name.
+- `Description`: Short description.
+- `Icon`: Bootstrap Icon class (e.g., `bi-shuffle`).
+- `DefaultData`: Map of default attributes.
+- `BranchNames`: Optional slice of strings defining branch names for this block type.
