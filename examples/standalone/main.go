@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/username/blockeditor"
+	"github.com/dracory/stepeditor"
 )
 
 // EmailBlock defines a block for sending emails.

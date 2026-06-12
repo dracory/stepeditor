@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-//go:embed internal/assets/*.html
+//go:embed internal/assets/*
 var assets embed.FS
 
 var templates = template.Must(template.New("").Delims("[[", "]]").ParseFS(assets, "internal/assets/*.html"))
@@ -122,6 +122,8 @@ type templateData struct {
 	Endpoint    string
 	FlowJSON    string
 	Definitions string
+	CSS         template.HTML
+	JS          template.HTML
 }
 
 func (e *Editor) getTemplateData() templateData {
@@ -136,11 +138,16 @@ func (e *Editor) getTemplateData() templateData {
 	flowJSON, _ := json.Marshal(e.flow)
 	defsJSON, _ := json.Marshal(defs)
 
+	css, _ := assets.ReadFile("internal/assets/editor_component.css")
+	js, _ := assets.ReadFile("internal/assets/editor_component.js")
+
 	return templateData{
 		ID:          e.id,
 		Endpoint:    e.config.Endpoint,
 		FlowJSON:    string(flowJSON),
 		Definitions: string(defsJSON),
+		CSS:         template.HTML(css),
+		JS:          template.HTML(js),
 	}
 }
 

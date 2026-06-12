@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/username/blockeditor"
+	"github.com/dracory/stepeditor"
 )
 
 type MyBlock struct{}

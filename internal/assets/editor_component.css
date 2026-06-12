@@ -1,0 +1,137 @@
+#[[.ID]] .editor-root {
+    --bg-color: #f0f2f5;
+    --canvas-bg: #ffffff;
+    --primary-color: #0d6efd;
+    --border-color: #dee2e6;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 600px; /* Default height for embedded editor */
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    overflow: hidden;
+}
+
+/* Header */
+#[[.ID]] .editor-header {
+    height: 60px;
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    justify-content: space-between;
+    z-index: 100;
+}
+
+/* Layout */
+#[[.ID]] .editor-body { flex: 1; display: flex; overflow: hidden; }
+
+/* Sidebar (Toolbox) */
+#[[.ID]] .toolbox {
+    width: 280px;
+    background: #fff;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+#[[.ID]] .toolbox-header { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+#[[.ID]] .block-library-item {
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+#[[.ID]] .block-library-item:hover { background: #f8f9fa; }
+
+/* Canvas */
+#[[.ID]] .canvas {
+    flex: 1;
+    overflow: auto;
+    background-color: var(--bg-color);
+    background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+    background-size: 20px 20px;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Settings Panel */
+#[[.ID]] .settings-panel {
+    width: 320px;
+    background: #fff;
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* Block Cards */
+#[[.ID]] .flow-block-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#[[.ID]] .block-card {
+    width: 300px;
+    background: #fff;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    position: relative;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+#[[.ID]] .block-card:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+#[[.ID]] .block-card.active { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15); }
+
+#[[.ID]] .block-icon {
+    width: 32px;
+    height: 32px;
+    background: #e7f0ff;
+    color: var(--primary-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+}
+
+/* Branching */
+#[[.ID]] .branches-container {
+    display: flex;
+    margin-top: 1rem;
+    gap: 2rem;
+    position: relative;
+}
+#[[.ID]] .branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 300px;
+    position: relative;
+}
+#[[.ID]] .branch-label {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+/* Connectors */
+#[[.ID]] .connector-v { width: 2px; height: 2rem; background: #adb5bd; }
+
+/* Actions */
+#[[.ID]] .block-actions {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    display: none;
+    gap: 4px;
+}
+#[[.ID]] .block-card:hover .block-actions { display: flex; }
+
+#[[.ID]] [v-cloak] { display: none; }
