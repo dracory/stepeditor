@@ -1,0 +1,107 @@
+<div id="[[.ID]]" class="step-flow-editor">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        [[.CSS]]
+    </style>
+
+    <div id="app-[[.ID]]" v-cloak class="editor-root">
+        <div class="editor-header">
+            <h5 class="mb-0"><i class="bi bi-diagram-3-fill me-2 text-primary"></i>Automation Flow Editor</h5>
+            <div>
+                <button @click="saveFlow" class="btn btn-primary btn-sm" :disabled="saving">
+                    <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+                    Save & Publish
+                </button>
+            </div>
+        </div>
+
+        <div class="editor-body">
+            <!-- Sidebar: Toolbox -->
+            <div class="toolbox">
+                <div class="toolbox-header">
+                    <h6 class="mb-0 text-muted">TOOLBOX</h6>
+                    <small class="text-muted">Drag or click nodes to add</small>
+                </div>
+                <template v-for="def in definitions" :key="def.type">
+                    <div @click="addBlock(def)" class="block-library-item">
+                        <div class="d-flex align-items-center">
+                            <div class="block-icon">
+                                <i :class="def.icon"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold small">{{ def.title }}</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">{{ def.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Main Canvas -->
+            <div class="canvas" @click="selectedBlockPath = null">
+                <div class="flow-block-container">
+                    <template v-for="(block, index) in flow" :key="block.id">
+                        <flow-node
+                            :block="block"
+                            :path="[index]"
+                            :selected-path="selectedBlockPath"
+                            :definitions="definitions"
+                            @select="selectBlock"
+                            @remove="removeBlock"
+                            @add-to-branch="addBlockToBranch"
+                        ></flow-node>
+                        <div v-if="index < flow.length - 1" class="connector-v"></div>
+                    </template>
+
+                    <div v-if="flow.length === 0" class="text-center mt-5 text-muted">
+                        <i class="bi bi-plus-circle display-4"></i>
+                        <p>Click a block in the toolbox to start</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="settings-panel">
+                <template v-if="selectedBlock">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="mb-0">NODE SETTINGS</h6>
+                        <button @click="selectedBlockPath = null" class="btn-close btn-sm"></button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Title</label>
+                        <input v-model="selectedBlock.title" class="form-control form-control-sm">
+                    </div>
+
+                    <hr>
+                    <h6 class="small fw-bold mb-3">DATA ATTRIBUTES</h6>
+                    <template v-for="(val, key) in selectedBlock.data" :key="key">
+                        <div class="mb-3">
+                            <label class="form-label small text-capitalize">{{ key }}</label>
+                            <input v-model="selectedBlock.data[key]" class="form-control form-control-sm">
+                        </div>
+                    </template>
+
+                    <div v-if="Object.keys(selectedBlock.data).length === 0" class="text-muted small italic">
+                        No configurable attributes.
+                    </div>
+                </template>
+                <div v-else class="text-center text-muted mt-5">
+                    <p class="small">Select a node to edit its properties</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        (function() {
+            window["editorData_[[.ID]]"] = {
+                flow: JSON.parse('[[.FlowJSON]]'),
+                definitions: JSON.parse('[[.Definitions]]')
+            };
+            [[.JS]]
+        })();
+    </script>
+</div>

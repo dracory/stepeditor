@@ -7,7 +7,7 @@ A powerful, extensible, step-by-step workflow editor for Golang projects, simila
 ## Features
 
 - **Branching Support**: Create complex workflows with conditional paths (e.g., True/False branches).
-- **Embeddable**: Easily mount the editor on any HTTP endpoint in your Go application.
+- **Embeddable**: Easily mount the editor on any HTTP endpoint or embed it as a standalone UI component in your existing page.
 - **Extensible**: Define your own block types and branch names by implementing a simple Go interface.
 - **Reactive UI**: Built with Vue.js 3 and Bootstrap for a modern, responsive "canvas-style" experience.
 - **JSON Serialization**: Load and save flows as deeply nested JSON structures.
@@ -16,7 +16,7 @@ A powerful, extensible, step-by-step workflow editor for Golang projects, simila
 ## Installation
 
 ```bash
-go get github.com/username/stepfloweditor
+go get github.com/dracory/stepeditor
 ```
 
 ## Quick Start
@@ -26,14 +26,14 @@ package main
 
 import (
 	"net/http"
-	"github.com/username/stepfloweditor"
+	"github.com/dracory/stepeditor"
 )
 
 // Define a custom block with branching
 type ConditionBlock struct{}
 
-func (b ConditionBlock) Definition() stepfloweditor.BlockDefinition {
-	return stepfloweditor.BlockDefinition{
+func (b ConditionBlock) Definition() blockeditor.BlockDefinition {
+	return blockeditor.BlockDefinition{
 		Type:        "condition",
 		Title:       "Branch Check",
 		Description: "Check a condition and branch the flow.",
@@ -48,9 +48,9 @@ func (b ConditionBlock) Definition() stepfloweditor.BlockDefinition {
 }
 
 func main() {
-	editor := stepfloweditor.New(stepfloweditor.NewConfig{
+	editor := blockeditor.New(blockeditor.NewConfig{
 		Endpoint: "/editor",
-		Blocks: []stepfloweditor.CustomBlock{
+		Blocks: []blockeditor.CustomBlock{
 			ConditionBlock{},
 			// ... other blocks
 		},
@@ -63,15 +63,47 @@ func main() {
 }
 ```
 
+## Embedding as a Component
+
+You can embed the editor as a compartmentalized UI block in any page:
+
+```go
+editor := blockeditor.New(blockeditor.NewConfig{
+    ID:       "my-editor",
+    Endpoint: "/api/editor",
+})
+
+// In your template
+layoutHTML = layout(editor.ToHTML())
+```
+
+## Examples
+
+The following examples demonstrate different ways to use the editor:
+
+### Standalone Editor
+Demonstrates how to mount the editor on a dedicated HTTP endpoint.
+![Standalone Example](assets/examples/standalone.png)
+Source: [examples/standalone/main.go](examples/standalone/main.go)
+
+### Embedded Editor
+Demonstrates how to embed the editor as a component within a custom HTML layout.
+![Embedded Example](assets/examples/embedded.png)
+Source: [examples/embedded/main.go](examples/embedded/main.go)
+
 ## API
 
-### `stepfloweditor.New(config NewConfig) *Editor`
+### `blockeditor.New(config NewConfig) *Editor`
 
 Creates a new editor instance.
 
 ### `Editor.ServeHTTP(w, r)`
 
 Handles HTTP requests. Mount this on your router.
+
+### `Editor.ToHTML() string`
+
+Returns the self-contained HTML for the editor component, including scoped CSS and isolated JavaScript.
 
 ### `Editor.GetFlow() []Block`
 
