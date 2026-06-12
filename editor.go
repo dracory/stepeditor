@@ -1,15 +1,21 @@
-package stepfloweditor
+package blockeditor
 
 import (
+	"bytes"
+	"crypto/rand"
 	"embed"
 	"encoding/json"
+	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
 	"sync"
 )
 
-//go:embed internal/assets/index.html
+//go:embed internal/assets/*.html
 var assets embed.FS
+
+var templates = template.Must(template.New("").Delims("[[", "]]").ParseFS(assets, "internal/assets/*.html"))
 
 // Block represents a single step in the flow.
 type Block struct {
@@ -37,12 +43,15 @@ type CustomBlock interface {
 
 // NewConfig is the configuration for the Step Flow Editor.
 type NewConfig struct {
+	ID       string
 	Endpoint string
+	Value    []Block
 	Blocks   []CustomBlock
 }
 
 // Editor handles the HTTP requests for the step flow editor.
 type Editor struct {
+	id     string
 	config NewConfig
 	flow   []Block
 	mu     sync.RWMutex
@@ -52,9 +61,22 @@ type Editor struct {
 func New(config NewConfig) *Editor {
 	// Ensure endpoint doesn't end with slash for consistency
 	config.Endpoint = strings.TrimSuffix(config.Endpoint, "/")
+
+	id := config.ID
+	if id == "" {
+		b := make([]byte, 4)
+		rand.Read(b)
+		id = fmt.Sprintf("editor_%x", b)
+	}
+
+	if config.Value == nil {
+		config.Value = make([]Block, 0)
+	}
+
 	return &Editor{
+		id:     id,
 		config: config,
-		flow:   make([]Block, 0),
+		flow:   config.Value,
 	}
 }
 
@@ -75,13 +97,51 @@ func (e *Editor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *Editor) serveIndex(w http.ResponseWriter, r *http.Request) {
-	index, err := assets.ReadFile("internal/assets/index.html")
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	data := e.getTemplateData()
+
 	w.Header().Set("Content-Type", "text/html")
-	w.Write(index)
+	if err := templates.ExecuteTemplate(w, "index.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// ToHTML returns the HTML for the editor component.
+func (e *Editor) ToHTML() string {
+	data := e.getTemplateData()
+
+	var buf bytes.Buffer
+	if err := templates.ExecuteTemplate(&buf, "editor_component.html", data); err != nil {
+		return fmt.Sprintf("Error rendering editor: %v", err)
+	}
+
+	return buf.String()
+}
+
+type templateData struct {
+	ID          string
+	Endpoint    string
+	FlowJSON    string
+	Definitions string
+}
+
+func (e *Editor) getTemplateData() templateData {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	defs := make([]BlockDefinition, len(e.config.Blocks))
+	for i, b := range e.config.Blocks {
+		defs[i] = b.Definition()
+	}
+
+	flowJSON, _ := json.Marshal(e.flow)
+	defsJSON, _ := json.Marshal(defs)
+
+	return templateData{
+		ID:          e.id,
+		Endpoint:    e.config.Endpoint,
+		FlowJSON:    string(flowJSON),
+		Definitions: string(defsJSON),
+	}
 }
 
 func (e *Editor) serveConfig(w http.ResponseWriter, r *http.Request) {

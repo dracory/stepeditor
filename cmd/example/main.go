@@ -5,14 +5,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/username/stepfloweditor"
+	"github.com/username/blockeditor"
 )
 
 // EmailBlock defines a block for sending emails.
 type EmailBlock struct{}
 
-func (b EmailBlock) Definition() stepfloweditor.BlockDefinition {
-	return stepfloweditor.BlockDefinition{
+func (b EmailBlock) Definition() blockeditor.BlockDefinition {
+	return blockeditor.BlockDefinition{
 		Type:        "email",
 		Title:       "Send Email",
 		Description: "Sends an email to a recipient.",
@@ -28,8 +28,8 @@ func (b EmailBlock) Definition() stepfloweditor.BlockDefinition {
 // DelayBlock defines a block for waiting.
 type DelayBlock struct{}
 
-func (b DelayBlock) Definition() stepfloweditor.BlockDefinition {
-	return stepfloweditor.BlockDefinition{
+func (b DelayBlock) Definition() blockeditor.BlockDefinition {
+	return blockeditor.BlockDefinition{
 		Type:        "delay",
 		Title:       "Wait",
 		Description: "Wait for a specified duration.",
@@ -43,8 +43,8 @@ func (b DelayBlock) Definition() stepfloweditor.BlockDefinition {
 // ConditionBlock defines a block for conditional logic.
 type ConditionBlock struct{}
 
-func (b ConditionBlock) Definition() stepfloweditor.BlockDefinition {
-	return stepfloweditor.BlockDefinition{
+func (b ConditionBlock) Definition() blockeditor.BlockDefinition {
+	return blockeditor.BlockDefinition{
 		Type:        "condition",
 		Title:       "Branch Check",
 		Description: "Check a condition and branch the flow.",
@@ -60,47 +60,45 @@ func (b ConditionBlock) Definition() stepfloweditor.BlockDefinition {
 
 func main() {
 	// Initialize the editor with custom blocks
-	editor := stepfloweditor.New(stepfloweditor.NewConfig{
+	editor := blockeditor.New(blockeditor.NewConfig{
 		Endpoint: "/editor",
-		Blocks: []stepfloweditor.CustomBlock{
+		Blocks: []blockeditor.CustomBlock{
 			EmailBlock{},
 			DelayBlock{},
 			ConditionBlock{},
 		},
-	})
-
-	// Add an initial branched flow
-	editor.SetFlow([]stepfloweditor.Block{
-		{
-			ID:    "b1",
-			Type:  "delay",
-			Title: "Daily Process",
-			Data:  map[string]string{"duration": "24h"},
-		},
-		{
-			ID:    "b2",
-			Type:  "condition",
-			Title: "Branch Check",
-			Data: map[string]string{
-				"variable": "status",
-				"operator": "==",
-				"value":    "approved",
+		Value: []blockeditor.Block{
+			{
+				ID:    "b1",
+				Type:  "delay",
+				Title: "Daily Process",
+				Data:  map[string]string{"duration": "24h"},
 			},
-			Branches: map[string][]stepfloweditor.Block{
-				"True": {
-					{
-						ID:    "b3",
-						Type:  "email",
-						Title: "Send Approval Email",
-						Data:  map[string]string{"subject": "Approved!"},
-					},
+			{
+				ID:    "b2",
+				Type:  "condition",
+				Title: "Branch Check",
+				Data: map[string]string{
+					"variable": "status",
+					"operator": "==",
+					"value":    "approved",
 				},
-				"False": {
-					{
-						ID:    "b4",
-						Type:  "email",
-						Title: "Send Rejection Email",
-						Data:  map[string]string{"subject": "Rejected"},
+				Branches: map[string][]blockeditor.Block{
+					"True": {
+						{
+							ID:    "b3",
+							Type:  "email",
+							Title: "Send Approval Email",
+							Data:  map[string]string{"subject": "Approved!"},
+						},
+					},
+					"False": {
+						{
+							ID:    "b4",
+							Type:  "email",
+							Title: "Send Rejection Email",
+							Data:  map[string]string{"subject": "Rejected"},
+						},
 					},
 				},
 			},
