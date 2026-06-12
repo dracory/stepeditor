@@ -8,7 +8,7 @@ A powerful, extensible, step-by-step workflow editor for Golang projects, simila
 
 - **Branching Support**: Create complex workflows with conditional paths (e.g., True/False branches).
 - **Embeddable**: Easily mount the editor on any HTTP endpoint or embed it as a standalone UI component in your existing page.
-- **Extensible**: Define your own block types and branch names by implementing a simple Go interface.
+- **Extensible**: Define your own step types and branch names by implementing a simple Go interface.
 - **Reactive UI**: Built with Vue.js 3 and Bootstrap for a modern, responsive "canvas-style" experience.
 - **JSON Serialization**: Load and save flows as deeply nested JSON structures.
 - **Interactive**: Drag-and-drop feel with recursive rendering and specialized node settings.
@@ -29,11 +29,11 @@ import (
 	"github.com/dracory/stepeditor"
 )
 
-// Define a custom block with branching
-type ConditionBlock struct{}
+// Define a custom step with branching
+type ConditionStep struct{}
 
-func (b ConditionBlock) Definition() blockeditor.BlockDefinition {
-	return blockeditor.BlockDefinition{
+func (b ConditionStep) StepDefinition() stepeditor.StepDefinition {
+	return stepeditor.StepDefinition{
 		Type:        "condition",
 		Title:       "Branch Check",
 		Description: "Check a condition and branch the flow.",
@@ -48,11 +48,11 @@ func (b ConditionBlock) Definition() blockeditor.BlockDefinition {
 }
 
 func main() {
-	editor := blockeditor.New(blockeditor.NewConfig{
+	editor := stepeditor.New(stepeditor.Config{
 		Endpoint: "/editor",
-		Blocks: []blockeditor.CustomBlock{
-			ConditionBlock{},
-			// ... other blocks
+		StepDefinitions: []stepeditor.CustomStep{
+			ConditionStep{},
+			// ... other steps
 		},
 	})
 
@@ -65,10 +65,10 @@ func main() {
 
 ## Embedding as a Component
 
-You can embed the editor as a compartmentalized UI block in any page:
+You can embed the editor as a compartmentalized UI step in any page:
 
 ```go
-editor := blockeditor.New(blockeditor.NewConfig{
+editor := stepeditor.New(stepeditor.Config{
     ID:       "my-editor",
     Endpoint: "/api/editor",
 })
@@ -93,7 +93,7 @@ Source: [examples/embedded/main.go](examples/embedded/main.go)
 
 ## API
 
-### `blockeditor.New(config NewConfig) *Editor`
+### `stepeditor.New(config Config) *Editor`
 
 Creates a new editor instance.
 
@@ -105,28 +105,28 @@ Handles HTTP requests. Mount this on your router.
 
 Returns the self-contained HTML for the editor component, including scoped CSS and isolated JavaScript.
 
-### `Editor.GetFlow() []Block`
+### `Editor.GetFlow() []Step`
 
-Returns the current flow as a slice of `Block` structs, including nested branches.
+Returns the current flow as a slice of `Step` structs, including nested branches.
 
-### `Editor.SetFlow(flow []Block)`
+### `Editor.SetFlow(flow []Step)`
 
 Sets the current flow.
 
-## Custom Blocks
+## Custom Steps
 
-To create a custom block, implement the `CustomBlock` interface:
+To create a custom step, implement the `CustomStep` interface:
 
 ```go
-type CustomBlock interface {
-	Definition() BlockDefinition
+type CustomStep interface {
+	StepDefinition() StepDefinition
 }
 ```
 
-The `BlockDefinition` includes:
-- `Type`: Unique identifier for the block type.
+The `StepDefinition` includes:
+- `Type`: Unique identifier for the step type.
 - `Title`: Display name.
 - `Description`: Short description.
 - `Icon`: Bootstrap Icon class (e.g., `bi-shuffle`).
 - `DefaultData`: Map of default attributes.
-- `BranchNames`: Optional slice of strings defining branch names for this block type.
+- `BranchNames`: Optional slice of strings defining branch names for this step type.

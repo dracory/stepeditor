@@ -2,55 +2,55 @@
     const mountId = 'app-[[.ID]]';
     const endpoint = '[[.Endpoint]]';
 
-    const FlowNode = {
-        name: 'flow-node',
-        props: ['block', 'path', 'selectedPath', 'definitions'],
+    const StepNode = {
+        name: 'step-node',
+        props: ['step', 'path', 'selectedPath', 'stepDefinitions'],
         template: `
-            <div class="flow-block-container">
-                <div class="block-card"
+            <div class="FlowStepContainer">
+                <div class="StepCard"
                      :class="{ active: isSelected }"
                      @click.stop="$emit('select', path)">
 
-                    <div class="block-actions">
+                    <div class="StepActions">
                         <button @click.stop="$emit('remove', path)" class="btn btn-danger btn-xs py-0 px-1" style="font-size: 0.6rem;">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
 
                     <div class="d-flex align-items-center">
-                        <div class="block-icon">
-                            <i :class="getIcon(block.type)"></i>
+                        <div class="StepIcon">
+                            <i :class="getIcon(step.type)"></i>
                         </div>
                         <div class="overflow-hidden">
-                            <div class="fw-bold small text-truncate">{{ block.title }}</div>
-                            <div class="text-muted" style="font-size: 0.65rem;">{{ block.type }}</div>
+                            <div class="fw-bold small text-truncate">{{ step.title }}</div>
+                            <div class="text-muted" style="font-size: 0.65rem;">{{ step.type }}</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Branches -->
                         <template v-if="hasBranches">
-                            <div class="branches-container">
+                            <div class="BranchesContainer">
                                 <template v-for="branchName in branchNames" :key="branchName">
-                                    <div class="branch">
-                                        <div class="connector-v"></div>
-                                        <div class="branch-label">{{ branchName }}</div>
-                                        <div class="connector-v"></div>
+                                    <div class="Branch">
+                                        <div class="ConnectorV"></div>
+                                        <div class="BranchLabel">{{ branchName }}</div>
+                                        <div class="ConnectorV"></div>
 
-                                        <template v-for="(b, idx) in (block.branches[branchName] || [])" :key="b.id">
-                                            <flow-node
-                                                :block="b"
+                                        <template v-for="(s, idx) in (step.branches[branchName] || [])" :key="s.id">
+                                            <step-node
+                                                :step="s"
                                                 :path="[...path, 'branches', branchName, idx]"
                                                 :selected-path="selectedPath"
-                                                :definitions="definitions"
+                                                :step-definitions="stepDefinitions"
                                                 @select="(p) => $emit('select', p)"
                                                 @remove="(p) => $emit('remove', p)"
                                                 @add-to-branch="(p, def) => $emit('add-to-branch', p, def)"
-                                            ></flow-node>
-                                            <div v-if="idx < block.branches[branchName].length - 1" class="connector-v"></div>
+                                            ></step-node>
+                                            <div v-if="idx < step.branches[branchName].length - 1" class="ConnectorV"></div>
                                         </template>
 
-                                        <button @click.stop="addBlockToThisBranch(branchName)" class="btn btn-outline-primary btn-xs mt-2" style="font-size: 0.6rem; padding: 2px 5px;">
+                                        <button @click.stop="addStepToThisBranch(branchName)" class="btn btn-outline-primary btn-xs mt-2" style="font-size: 0.6rem; padding: 2px 5px;">
                                             <i class="bi bi-plus"></i>
                                         </button>
                                     </div>
@@ -64,82 +64,82 @@
                 return JSON.stringify(this.path) === JSON.stringify(this.selectedPath);
             },
             hasBranches() {
-                const def = this.definitions.find(d => d.type === this.block.type);
+                const def = this.stepDefinitions.find(d => d.type === this.step.type);
                 return def && def.branchNames && def.branchNames.length > 0;
             },
             branchNames() {
-                const def = this.definitions.find(d => d.type === this.block.type);
+                const def = this.stepDefinitions.find(d => d.type === this.step.type);
                 return def ? def.branchNames : [];
             }
         },
         methods: {
             getIcon(type) {
-                const def = this.definitions.find(d => d.type === type);
+                const def = this.stepDefinitions.find(d => d.type === type);
                 return def ? def.icon : 'bi-box';
             },
-            addBlockToThisBranch(branchName) {
+            addStepToThisBranch(branchName) {
                 this.$emit('add-to-branch', [...this.path, 'branches', branchName], null);
             }
         }
     };
 
     createApp({
-        components: { FlowNode },
+        components: { StepNode },
         setup() {
             const flow = ref([]);
-            const definitions = ref([]);
-            const selectedBlockPath = ref(null);
+            const stepDefinitions = ref([]);
+            const selectedStepPath = ref(null);
             const saving = ref(false);
 
-            const selectedBlock = computed(() => {
-                if (!selectedBlockPath.value) return null;
+            const selectedStep = computed(() => {
+                if (!selectedStepPath.value) return null;
                 let curr = flow.value;
-                for (const p of selectedBlockPath.value) {
+                for (const p of selectedStepPath.value) {
                     curr = curr[p];
                 }
                 return curr;
             });
 
-            const addBlock = (def) => {
-                const newBlock = {
-                    id: 'b_' + Math.random().toString(36).substr(2, 9),
+            const addStep = (def) => {
+                const newStep = {
+                    id: 's_' + Math.random().toString(36).substr(2, 9),
                     type: def.type,
                     title: def.title,
                     data: JSON.parse(JSON.stringify(def.defaultData || {})),
                     branches: {}
                 };
                 if (def.branchNames) {
-                    def.branchNames.forEach(bn => newBlock.branches[bn] = []);
+                    def.branchNames.forEach(bn => newStep.branches[bn] = []);
                 }
-                flow.value.push(newBlock);
+                flow.value.push(newStep);
             };
 
-            const addBlockToBranch = (branchPath, def) => {
-                if (!def) def = definitions.value[0];
+            const addStepToBranch = (branchPath, def) => {
+                if (!def) def = stepDefinitions.value[0];
 
-                const newBlock = {
-                    id: 'b_' + Math.random().toString(36).substr(2, 9),
+                const newStep = {
+                    id: 's_' + Math.random().toString(36).substr(2, 9),
                     type: def.type,
                     title: def.title,
                     data: JSON.parse(JSON.stringify(def.defaultData || {})),
                     branches: {}
                 };
                 if (def.branchNames) {
-                    def.branchNames.forEach(bn => newBlock.branches[bn] = []);
+                    def.branchNames.forEach(bn => newStep.branches[bn] = []);
                 }
 
                 let curr = flow.value;
                 for (const p of branchPath) {
                     curr = curr[p];
                 }
-                curr.push(newBlock);
+                curr.push(newStep);
             };
 
-            const selectBlock = (path) => {
-                selectedBlockPath.value = path;
+            const selectStep = (path) => {
+                selectedStepPath.value = path;
             };
 
-            const removeBlock = (path) => {
+            const removeStep = (path) => {
                 const idx = path[path.length - 1];
                 const parentPath = path.slice(0, -1);
                 let curr = flow.value;
@@ -147,7 +147,7 @@
                     curr = curr[p];
                 }
                 curr.splice(idx, 1);
-                selectedBlockPath.value = null;
+                selectedStepPath.value = null;
             };
 
             const saveFlow = async () => {
@@ -173,7 +173,7 @@
                 const globalData = window["editorData_[[.ID]]"];
                 if (globalData) {
                     if (globalData.flow) flow.value = globalData.flow;
-                    if (globalData.definitions) definitions.value = globalData.definitions;
+                    if (globalData.stepDefinitions) stepDefinitions.value = globalData.stepDefinitions;
                 }
 
                 // Then refresh from API to ensure we have latest (optional)
@@ -181,7 +181,7 @@
                     const baseUrl = endpoint.endsWith('/') ? endpoint : endpoint + '/';
                     const res = await fetch(baseUrl + 'config');
                     const data = await res.json();
-                    definitions.value = data.definitions;
+                    stepDefinitions.value = data.stepDefinitions;
                     flow.value = data.flow || [];
                 } catch (e) {
                     console.warn("Failed to refresh config from API", e);
@@ -192,14 +192,14 @@
 
             return {
                 flow,
-                definitions,
-                selectedBlockPath,
-                selectedBlock,
+                stepDefinitions,
+                selectedStepPath,
+                selectedStep,
                 saving,
-                addBlock,
-                addBlockToBranch,
-                selectBlock,
-                removeBlock,
+                addStep,
+                addStepToBranch,
+                selectStep,
+                removeStep,
                 saveFlow
             };
         }

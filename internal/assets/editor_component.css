@@ -1,4 +1,4 @@
-#[[.ID]] .editor-root {
+#[[.ID]] .EditorRoot {
     --bg-color: #f0f2f5;
     --canvas-bg: #ffffff;
     --primary-color: #0d6efd;
@@ -13,7 +13,7 @@
 }
 
 /* Header */
-#[[.ID]] .editor-header {
+#[[.ID]] .EditorHeader {
     height: 60px;
     background: #fff;
     border-bottom: 1px solid var(--border-color);
@@ -25,10 +25,10 @@
 }
 
 /* Layout */
-#[[.ID]] .editor-body { flex: 1; display: flex; overflow: hidden; }
+#[[.ID]] .EditorBody { flex: 1; display: flex; overflow: hidden; }
 
 /* Sidebar (Toolbox) */
-#[[.ID]] .toolbox {
+#[[.ID]] .Toolbox {
     width: 280px;
     background: #fff;
     border-right: 1px solid var(--border-color);
@@ -36,17 +36,17 @@
     flex-direction: column;
     overflow-y: auto;
 }
-#[[.ID]] .toolbox-header { padding: 1rem; border-bottom: 1px solid var(--border-color); }
-#[[.ID]] .block-library-item {
+#[[.ID]] .ToolboxHeader { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+#[[.ID]] .StepLibraryItem {
     cursor: pointer;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #f0f0f0;
     transition: background 0.2s;
 }
-#[[.ID]] .block-library-item:hover { background: #f8f9fa; }
+#[[.ID]] .StepLibraryItem:hover { background: #f8f9fa; }
 
 /* Canvas */
-#[[.ID]] .canvas {
+#[[.ID]] .Canvas {
     flex: 1;
     overflow: auto;
     background-color: var(--bg-color);
@@ -59,7 +59,7 @@
 }
 
 /* Settings Panel */
-#[[.ID]] .settings-panel {
+#[[.ID]] .SettingsPanel {
     width: 320px;
     background: #fff;
     border-left: 1px solid var(--border-color);
@@ -67,13 +67,13 @@
     padding: 1.5rem;
 }
 
-/* Block Cards */
-#[[.ID]] .flow-block-container {
+/* Step Cards */
+#[[.ID]] .FlowStepContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-#[[.ID]] .block-card {
+#[[.ID]] .StepCard {
     width: 300px;
     background: #fff;
     border: 2px solid var(--border-color);
@@ -84,10 +84,10 @@
     transition: all 0.2s;
     cursor: pointer;
 }
-#[[.ID]] .block-card:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-#[[.ID]] .block-card.active { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15); }
+#[[.ID]] .StepCard:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+#[[.ID]] .StepCard.active { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15); }
 
-#[[.ID]] .block-icon {
+#[[.ID]] .StepIcon {
     width: 32px;
     height: 32px;
     background: #e7f0ff;
@@ -100,20 +100,20 @@
 }
 
 /* Branching */
-#[[.ID]] .branches-container {
+#[[.ID]] .BranchesContainer {
     display: flex;
     margin-top: 1rem;
     gap: 2rem;
     position: relative;
 }
-#[[.ID]] .branch {
+#[[.ID]] .Branch {
     display: flex;
     flex-direction: column;
     align-items: center;
     min-width: 300px;
     position: relative;
 }
-#[[.ID]] .branch-label {
+#[[.ID]] .BranchLabel {
     font-size: 0.75rem;
     font-weight: bold;
     color: #6c757d;
@@ -122,16 +122,16 @@
 }
 
 /* Connectors */
-#[[.ID]] .connector-v { width: 2px; height: 2rem; background: #adb5bd; }
+#[[.ID]] .ConnectorV { width: 2px; height: 2rem; background: #adb5bd; }
 
 /* Actions */
-#[[.ID]] .block-actions {
+#[[.ID]] .StepActions {
     position: absolute;
     top: -10px;
     right: 10px;
     display: none;
     gap: 4px;
 }
-#[[.ID]] .block-card:hover .block-actions { display: flex; }
+#[[.ID]] .StepCard:hover .StepActions { display: flex; }
 
 #[[.ID]] [v-cloak] { display: none; }
