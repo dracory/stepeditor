@@ -49,7 +49,7 @@ The current codebase uses a mix of "Block" and "Step" terminology. While the pro
     - `removeBlock` -> `removeStep`
 
 ### 6. Frontend (CSS)
-Rename CSS classes to use CamelCase and "Step" instead of "Block" to avoid conflicts with global libraries like Bootstrap.
+Rename CSS classes to use PascalCase and "Step" instead of "Block" to avoid conflicts with global libraries like Bootstrap.
 
 | Current Class | Proposed Class |
 |---------------|----------------|

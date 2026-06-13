@@ -1,110 +1,106 @@
 <div id="[[.ID]]" class="step-flow-editor">
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <!-- Vue.js 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        [[.CSS]]
+    </style>
 
-    <style>[[.CSS]]</style>
+    <div id="app-[[.ID]]" v-cloak class="editor-root">
+        <div class="editor-header">
+            <h5 class="mb-0"><i class="bi bi-diagram-3-fill me-2 text-primary"></i>Automation Flow Editor</h5>
+            <div>
+                <button @click="saveFlow" class="btn btn-primary btn-sm" :disabled="saving">
+                    <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+                    Save & Publish
+                </button>
+            </div>
+        </div>
 
-    <div id="app-[[.ID]]" v-cloak>
-        <div class="EditorRoot">
-            <!-- Header -->
-            <div class="EditorHeader">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-diagram-3-fill text-primary me-2 fs-4"></i>
-                    <h5 class="mb-0">Step Flow Editor</h5>
+        <div class="editor-body">
+            <!-- Sidebar: Toolbox -->
+            <div class="toolbox">
+                <div class="toolbox-header">
+                    <h6 class="mb-0 text-muted">TOOLBOX</h6>
+                    <small class="text-muted">Drag or click nodes to add</small>
                 </div>
-                <div>
-                    <button @click="saveFlow" class="btn btn-primary btn-sm" :disabled="saving">
-                        <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                        <i v-else class="bi bi-cloud-arrow-up-fill me-1"></i>
-                        Publish Flow
-                    </button>
+                <template v-for="def in definitions" :key="def.type">
+                    <div @click="addBlock(def)" class="block-library-item">
+                        <div class="d-flex align-items-center">
+                            <div class="block-icon">
+                                <i :class="def.icon"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold small">{{ def.title }}</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">{{ def.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Main Canvas -->
+            <div class="canvas" @click="selectedBlockPath = null">
+                <div class="flow-block-container">
+                    <template v-for="(block, index) in flow" :key="block.id">
+                        <flow-node
+                            :block="block"
+                            :path="[index]"
+                            :selected-path="selectedBlockPath"
+                            :definitions="definitions"
+                            @select="selectBlock"
+                            @remove="removeBlock"
+                            @add-to-branch="addBlockToBranch"
+                        ></flow-node>
+                        <div v-if="index < flow.length - 1" class="connector-v"></div>
+                    </template>
+
+                    <div v-if="flow.length === 0" class="text-center mt-5 text-muted">
+                        <i class="bi bi-plus-circle display-4"></i>
+                        <p>Click a block in the toolbox to start</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="EditorBody">
-                <!-- Sidebar: Toolbox -->
-                <div class="Toolbox">
-                    <div class="ToolboxHeader">
-                        <h6 class="mb-0">Steps</h6>
-                        <small class="text-muted">Drag or click to add</small>
+            <!-- Settings Panel -->
+            <div class="settings-panel">
+                <template v-if="selectedBlock">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="mb-0">NODE SETTINGS</h6>
+                        <button @click="selectedBlockPath = null" class="btn-close btn-sm"></button>
                     </div>
-                    <div class="p-0">
-                        <div v-for="def in stepDefinitions" :key="def.type"
-                            class="StepLibraryItem" @click="addStep(def)">
-                            <div class="d-flex align-items-center">
-                                <div class="me-3 fs-5">
-                                    <i :class="def.icon"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-bold small">{{ def.title }}</div>
-                                    <div class="text-muted" style="font-size: 0.7rem;">{{ def.description }}</div>
-                                </div>
-                            </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Title</label>
+                        <input v-model="selectedBlock.title" class="form-control form-control-sm">
+                    </div>
+
+                    <hr>
+                    <h6 class="small fw-bold mb-3">DATA ATTRIBUTES</h6>
+                    <template v-for="(val, key) in selectedBlock.data" :key="key">
+                        <div class="mb-3">
+                            <label class="form-label small text-capitalize">{{ key }}</label>
+                            <input v-model="selectedBlock.data[key]" class="form-control form-control-sm">
                         </div>
-                    </div>
-                </div>
-
-                <!-- Main Canvas -->
-                <div class="Canvas" @click="selectedStepPath = null">
-                    <div v-if="flow.length === 0" class="text-center mt-5 text-muted">
-                        <i class="bi bi-plus-circle fs-1 mb-2 d-block"></i>
-                        <p>Your flow is empty.<br>Add your first step from the sidebar.</p>
-                    </div>
-
-                    <template v-for="(step, idx) in flow" :key="step.id">
-                        <step-node
-                            :step="step"
-                            :path="[idx]"
-                            :selected-path="selectedStepPath"
-                            :step-definitions="stepDefinitions"
-                            @select="selectStep"
-                            @remove="removeStep"
-                            @add-to-branch="addStepToBranch"
-                        ></step-node>
-                        <div v-if="idx < flow.length - 1" class="ConnectorV"></div>
                     </template>
-                </div>
 
-                <!-- Settings Panel -->
-                <div class="SettingsPanel">
-                    <div v-if="selectedStep">
-                        <h6 class="mb-3 border-bottom pb-2">Step Settings</h6>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Step Title</label>
-                            <input v-model="selectedStep.title" class="form-control form-control-sm">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Step Type</label>
-                            <input :value="selectedStep.type" class="form-control form-control-sm" readonly disabled>
-                        </div>
-
-                        <div v-if="Object.keys(selectedStep.data).length > 0">
-                            <label class="form-label small fw-bold d-block mt-4 border-bottom pb-1">Configuration</label>
-                            <div v-for="(val, key) in selectedStep.data" :key="key" class="mb-2">
-                                <label class="form-label x-small text-muted mb-1 text-capitalize">{{ key }}</label>
-                                <input v-model="selectedStep.data[key]" class="form-control form-control-sm">
-                            </div>
-                        </div>
+                    <div v-if="Object.keys(selectedBlock.data).length === 0" class="text-muted small italic">
+                        No configurable attributes.
                     </div>
-                    <div v-else class="h-100 d-flex align-items-center justify-content-center text-muted text-center p-4">
-                        <small>Select a step on the canvas to configure its properties.</small>
-                    </div>
+                </template>
+                <div v-else class="text-center text-muted mt-5">
+                    <p class="small">Select a node to edit its properties</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        window["editorData_[[.ID]]"] = {
-            flow: [[.FlowJSON]],
-            stepDefinitions: [[.StepDefinitions]]
-        };
         (function() {
+            window["editorData_[[.ID]]"] = {
+                flow: JSON.parse('[[.FlowJSON]]'),
+                definitions: JSON.parse('[[.Definitions]]')
+            };
             [[.JS]]
         })();
     </script>

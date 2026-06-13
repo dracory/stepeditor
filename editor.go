@@ -161,7 +161,6 @@ func (e *Editor) getTemplateData() templateData {
 	tCSS.Execute(&cssBuf, interpolationData)
 
 	// Escape single quotes in JSON for embedding in JS strings if necessary
-	// But since we inject them as raw JSON in the template, we just need the strings
 	flowJSONStr := strings.ReplaceAll(string(flowJSON), "'", "\\'")
 	defsJSONStr := strings.ReplaceAll(string(defsJSON), "'", "\\'")
 
@@ -170,9 +169,8 @@ func (e *Editor) getTemplateData() templateData {
 		Endpoint:        e.config.Endpoint,
 		FlowJSON:        flowJSONStr,
 		StepDefinitions: defsJSONStr,
-		// Using template.HTML here is still fine even with text/template as it's just a string subtype
-		CSS: template.HTML(cssBuf.String()),
-		JS:  template.HTML(jsBuf.String()),
+		CSS:             template.HTML(cssBuf.String()),
+		JS:              template.HTML(jsBuf.String()),
 	}
 }
 
