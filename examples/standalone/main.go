@@ -8,11 +8,11 @@ import (
 	"github.com/dracory/stepeditor"
 )
 
-// EmailBlock defines a block for sending emails.
-type EmailBlock struct{}
+// EmailStep defines a step for sending emails.
+type EmailStep struct{}
 
-func (b EmailBlock) Definition() blockeditor.BlockDefinition {
-	return blockeditor.BlockDefinition{
+func (b EmailStep) StepDefinition() stepeditor.StepDefinition {
+	return stepeditor.StepDefinition{
 		Type:        "email",
 		Title:       "Send Email",
 		Description: "Sends an email to a recipient.",
@@ -25,11 +25,11 @@ func (b EmailBlock) Definition() blockeditor.BlockDefinition {
 	}
 }
 
-// DelayBlock defines a block for waiting.
-type DelayBlock struct{}
+// DelayStep defines a step for waiting.
+type DelayStep struct{}
 
-func (b DelayBlock) Definition() blockeditor.BlockDefinition {
-	return blockeditor.BlockDefinition{
+func (b DelayStep) StepDefinition() stepeditor.StepDefinition {
+	return stepeditor.StepDefinition{
 		Type:        "delay",
 		Title:       "Wait",
 		Description: "Wait for a specified duration.",
@@ -40,11 +40,11 @@ func (b DelayBlock) Definition() blockeditor.BlockDefinition {
 	}
 }
 
-// ConditionBlock defines a block for conditional logic.
-type ConditionBlock struct{}
+// ConditionStep defines a step for conditional logic.
+type ConditionStep struct{}
 
-func (b ConditionBlock) Definition() blockeditor.BlockDefinition {
-	return blockeditor.BlockDefinition{
+func (b ConditionStep) StepDefinition() stepeditor.StepDefinition {
+	return stepeditor.StepDefinition{
 		Type:        "condition",
 		Title:       "Branch Check",
 		Description: "Check a condition and branch the flow.",
@@ -59,23 +59,23 @@ func (b ConditionBlock) Definition() blockeditor.BlockDefinition {
 }
 
 func main() {
-	// Initialize the editor with custom blocks
-	editor := blockeditor.New(blockeditor.NewConfig{
+	// Initialize the editor with custom steps
+	editor := stepeditor.New(stepeditor.Config{
 		Endpoint: "/editor",
-		Blocks: []blockeditor.CustomBlock{
-			EmailBlock{},
-			DelayBlock{},
-			ConditionBlock{},
+		StepDefinitions: []stepeditor.CustomStep{
+			EmailStep{},
+			DelayStep{},
+			ConditionStep{},
 		},
-		Value: []blockeditor.Block{
+		InitialFlow: []stepeditor.Step{
 			{
-				ID:    "b1",
+				ID:    "s1",
 				Type:  "delay",
 				Title: "Daily Process",
 				Data:  map[string]string{"duration": "24h"},
 			},
 			{
-				ID:    "b2",
+				ID:    "s2",
 				Type:  "condition",
 				Title: "Branch Check",
 				Data: map[string]string{
@@ -83,10 +83,10 @@ func main() {
 					"operator": "==",
 					"value":    "approved",
 				},
-				Branches: map[string][]blockeditor.Block{
+				Branches: map[string][]stepeditor.Step{
 					"True": {
 						{
-							ID:    "b3",
+							ID:    "s3",
 							Type:  "email",
 							Title: "Send Approval Email",
 							Data:  map[string]string{"subject": "Approved!"},
@@ -94,7 +94,7 @@ func main() {
 					},
 					"False": {
 						{
-							ID:    "b4",
+							ID:    "s4",
 							Type:  "email",
 							Title: "Send Rejection Email",
 							Data:  map[string]string{"subject": "Rejected"},

@@ -9,23 +9,23 @@ import (
 	"github.com/dracory/stepeditor"
 )
 
-type MyBlock struct{}
+type MyStep struct{}
 
-func (b MyBlock) Definition() blockeditor.BlockDefinition {
-	return blockeditor.BlockDefinition{
-		Type:        "myblock",
-		Title:       "My Custom Block",
-		Description: "A block for the embedded editor.",
+func (b MyStep) StepDefinition() stepeditor.StepDefinition {
+	return stepeditor.StepDefinition{
+		Type:        "mystep",
+		Title:       "My Custom Step",
+		Description: "A step for the embedded editor.",
 		Icon:        "bi-star-fill",
 	}
 }
 
 func main() {
 	// 1. Initialize the editor
-	editor := blockeditor.New(blockeditor.NewConfig{
-		ID:       "my-embedded-editor",
-		Endpoint: "/api/editor",
-		Blocks:   []blockeditor.CustomBlock{MyBlock{}},
+	editor := stepeditor.New(stepeditor.Config{
+		ID:              "my-embedded-editor",
+		Endpoint:        "/api/editor",
+		StepDefinitions: []stepeditor.CustomStep{MyStep{}},
 	})
 
 	// 2. Setup the API endpoint for the editor
